@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# Comments to support chkconfig
+# chkconfig: - 98 02
+# description: rsync_service service script
+#
+# Source function library.
+. /etc/init.d/functions
+
+### Default variables
+prog_name="rsync_service"
+prog_path="/usr/bin/rsync"
+config_path="/etc/rsyncd/rsyncd.conf"
+pidfile="/usr/local/var/run/rsyncd.pid"
+lock_path=/var/lock/subsys/$prog_name
+
+RETVAL=0
+
+start(){
+  if [ -f $lock_path ]; then
+    echo "Lock(${lock_path} existed, there should be a running instance. If you are sure there are not, please remove the lock and start again)"
+    exit 1
+  fi
+
+  echo -n $"Starting $prog_name: "
+  rsync --daemon --config=/etc/rsyncd/rsyncd.conf
+  RETVAL=$?
+  echo
+  echo "PID: "`cat ${pidfile}`
+  echo
+  [ $RETVAL -eq 0 ] && touch $lock_path 
+  return $RETVAL
+}
+
+stop(){
+  echo -n $"Shutting down $prog_name: "
+  killproc -p ${pidfile}
+  RETVAL=$?
+  echo
+  [ $RETVAL -eq 0 ] && rm -f $lock_path 
+  return $RETVAL
+}
+
+restart() {
+  stop
+  start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    restart
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    RETVAL=1
+esac
+
+exit $RETVAL
