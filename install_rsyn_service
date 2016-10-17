@@ -1,0 +1,12 @@
+#! /bin/bash
+# usage: sudo ./install_rsync_service
+
+service=rsync_service
+
+cp init.d/$service /etc/init.d
+cd /etc/init.d
+chmod +x $service
+chkconfig --add $service
+chkconfig $service on
+echo "[INFO] service installed"
+
